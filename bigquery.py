@@ -58,7 +58,7 @@ class Client:
         else:
             return rows.to_dataframe(bqstorage_client=self.bqstorage_client)
 
-    def upload_csv(self, filepath: str, dataset: str, table: str, overwrite=False):
+    def upload_csv(self, filepath: str, dataset: str, table: str, overwrite: bool = False):
         dataset_ref = self.client.dataset(dataset)
         table_ref = dataset_ref.table(table)
         job_config = bigquery.LoadJobConfig()
