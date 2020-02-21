@@ -18,5 +18,7 @@ import gcp
 bq = gcp.BigQuery()
 
 df = bq.query("SELECT AVG(some_numeric_var) AS my_avg FROM some_dataset.some_table")
+
+# df is a regular pandas dataframe
 df.head()
 ```
