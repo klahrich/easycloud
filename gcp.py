@@ -13,10 +13,6 @@ class BigQuery:
     You need to set a GOOGLE_APPLICATION_CREDENTIALS environment variable to point to your secret file.
     '''
 
-    client = None
-    project = None
-    bqstorage_client = None
-
     def __init__(self):
         credentials = service_account.Credentials.from_service_account_file(os.environ["GOOGLE_APPLICATION_CREDENTIALS"])
         self.project = credentials.project_id
