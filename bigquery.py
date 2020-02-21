@@ -4,7 +4,7 @@ from google.cloud import bigquery_storage_v1beta1
 import os
 from typing import Dict
 
-class Client:
+class BigQuery:
     ''' 
     A simple wrapper over google'd bigquery api. 
     You need to set a GOOGLE_APPLICATION_CREDENTIALS environment variable to point to your secret file.
