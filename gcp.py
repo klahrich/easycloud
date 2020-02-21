@@ -101,6 +101,15 @@ class BigQuery:
             return rows.to_dataframe(bqstorage_client=self.bqstorage_client)
 
     def upload_csv(self, filepath: str, dataset: str, table: str, overwrite: bool = False):
+        '''
+        Upload a local CSV file to a BigQuery table
+        
+        Args:
+            filepath (str): full path to the CSV file
+            dataset (str): name of the dataset on BigQuery
+            table (str): name of the table on BigQuery
+            overwrite (bool): True = overwrite, False = append
+        '''        
         dataset_ref = self.client.dataset(dataset)
         table_ref = dataset_ref.table(table)
         job_config = bigquery.LoadJobConfig()
