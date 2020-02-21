@@ -4,6 +4,8 @@ from google.oauth2 import service_account
 from google.cloud import bigquery_storage_v1beta1
 import os
 from typing import Dict
+import pandas as pd
+from google.cloud.bigquery.table import Table
 
 class BigQuery:
     ''' 
@@ -22,7 +24,7 @@ class BigQuery:
                                       project=credentials.project_id)
         self.bqstorage_client = bigquery_storage_v1beta1.BigQueryStorageClient(credentials=credentials)
 
-    def table_exists(self, dataset, table):
+    def table_exists(self, dataset: str, table: str) -> bool:
         ''' Check if a table exists.
         
         Args:
@@ -39,7 +41,7 @@ class BigQuery:
         except NotFound:
             return False
 
-    def table_info(self, dataset, table):
+    def table_info(self, dataset: str, table: str) -> Table:
         '''
         See https://googleapis.dev/python/bigquery/latest/generated/google.cloud.bigquery.table.Table.html
         '''
@@ -62,7 +64,7 @@ class BigQuery:
         else:
             return res.to_dataframe(bqstorage_client=self.bqstorage_client)
 
-    def create_table(self, sql, dataset, table, overwrite=False):
+    def create_table(self, sql, dataset, table, overwrite=False) -> None:
         '''
         Create a BigQuery table from sql query.
 
@@ -88,7 +90,7 @@ class BigQuery:
 
         query_job.result()
 
-    def list_rows(self, dataset: str, table: str, fields: Dict[str, str] = None, use_bqstorage=True):
+    def list_rows(self, dataset: str, table: str, fields: Dict[str, str] = None, use_bqstorage=True) -> pd.DataFrame:
         '''
         Retrieve all rows form a big query table.
 
@@ -108,7 +110,7 @@ class BigQuery:
         else:
             return rows.to_dataframe(bqstorage_client=self.bqstorage_client)
 
-    def upload_csv(self, filepath: str, dataset: str, table: str, overwrite: bool = False):
+    def upload_csv(self, filepath: str, dataset: str, table: str, overwrite: bool = False) -> None:
         '''
         Upload a local CSV file to a BigQuery table
         
