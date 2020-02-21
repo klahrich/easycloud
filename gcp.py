@@ -1,3 +1,4 @@
+from google.cloud.exceptions import NotFound
 from google.cloud import bigquery
 from google.oauth2 import service_account
 from google.cloud import bigquery_storage_v1beta1
@@ -23,6 +24,20 @@ class BigQuery:
                                       project=credentials.project_id)
         self.bqstorage_client = bigquery_storage_v1beta1.BigQueryStorageClient(credentials=credentials)
 
+    def table_exists(self, dataset, table):
+        dataset_ref = self.client.dataset(dataset)
+        table_ref = dataset_ref.table(table)
+        try:
+            self.client.get_table(table_ref)
+            return True
+        except NotFound:
+            return False
+
+    def table_info(self, dataset, table):
+        dataset_ref = self.client.dataset(dataset)
+        table_ref = dataset_ref.table(table)
+        return self.client.get_table(table_ref)
+
     def query(self, sql, use_bqstorage=True):
         '''
         Args:
@@ -37,6 +52,33 @@ class BigQuery:
             return res.to_dataframe()
         else:
             return res.to_dataframe(bqstorage_client=self.bqstorage_client)
+
+    def create_table(self, sql, dataset, table, overwrite=False):
+        '''
+        Create a BigQuery table from sql query.
+
+        Args:
+            sql (str): the sql query to run (e.g. "SELECT * FROM some_dataset.some_table")
+            dataset (str): name of destination dataset
+            table (str): name of destination table
+            overwrite (bool): if False and the table already exists, the function will do nothing
+        '''
+        dataset_ref = self.client.dataset(dataset)
+        table_ref = dataset_ref.table(table)
+        job_config = bigquery.QueryJobConfig()
+        job_config.destination = table_ref
+        
+        if check_table_existence(destination_table):
+            if overwrite:
+                client.delete_table(destination_table)
+            else:
+                print(f"Table {dataset}:{table} already exists. Skipping.")
+                return
+        
+        query_job = client.query(sql,
+                                job_config=job_config)
+
+        query_job.result()
 
     def list_rows(self, dataset: str, table: str, fields: Dict[str, str] = None, use_bqstorage=True):
         '''
