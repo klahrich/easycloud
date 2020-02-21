@@ -49,7 +49,7 @@ class BigQuery:
         table_ref = dataset_ref.table(table)
         return self.client.get_table(table_ref)
 
-    def query(self, sql, use_bqstorage=True):
+    def query(self, sql, use_bqstorage=True) -> pd.DataFrame:
         '''
         Args:
             sql (str): the SQL query you want to run
