@@ -23,6 +23,14 @@ class BigQuery:
         self.bqstorage_client = bigquery_storage_v1beta1.BigQueryStorageClient(credentials=credentials)
 
     def table_exists(self, dataset, table):
+        ''' Check if a table exists.
+        
+        Args:
+            dataset (str): name of the dataset on BigQuery
+            table (str): name of the table on BigQuery
+            
+        Returns: True or False
+        '''
         dataset_ref = self.client.dataset(dataset)
         table_ref = dataset_ref.table(table)
         try:
