@@ -7,9 +7,11 @@ from typing import Dict
 
 class BigQuery:
     ''' 
-    A simple wrapper over google bigquery api. 
-    You need to set a GOOGLE_APPLICATION_CREDENTIALS environment variable to point to your service account key.
+    A simple wrapper over google'd bigquery api. 
+    You need to set a GOOGLE_APPLICATION_CREDENTIALS environment variable to point to your secret file.
     '''
+
+
     credentials = None
     client = None
     key_path = None
@@ -32,6 +34,9 @@ class BigQuery:
             return False
 
     def table_info(self, dataset, table):
+        '''
+        See https://googleapis.dev/python/bigquery/latest/generated/google.cloud.bigquery.table.Table.html
+        '''
         dataset_ref = self.client.dataset(dataset)
         table_ref = dataset_ref.table(table)
         return self.client.get_table(table_ref)
@@ -66,15 +71,14 @@ class BigQuery:
         job_config = bigquery.QueryJobConfig()
         job_config.destination = table_ref
         
-        if check_table_existence(destination_table):
+        if self.table_exists(dataset, table):
             if overwrite:
-                client.delete_table(destination_table)
+                self.client.delete_table(table)
             else:
                 print(f"Table {dataset}:{table} already exists. Skipping.")
                 return
         
-        query_job = client.query(sql,
-                                job_config=job_config)
+        query_job = self.client.query(sql, job_config=job_config)
 
         query_job.result()
 
@@ -83,8 +87,7 @@ class BigQuery:
         Retrieve all rows form a big query table.
 
         Args:
-            dataset (str): name of the dataset
-            table (str): name of the table
+            table (str): Full table name, "project_id.dataset.tablename"
             fields (dict): dict of {"field_name": "field_type"}. If None, all columns are returned
             use_bqstorage (bool): set to True to download big data, will be faster
 
@@ -100,16 +103,6 @@ class BigQuery:
             return rows.to_dataframe(bqstorage_client=self.bqstorage_client)
 
     def upload_csv(self, filepath: str, dataset: str, table: str, overwrite: bool = False):
-        '''
-        Upload a CSV file to a big query table.
-
-        Args:
-            filepath (str): full path of the CSV local file
-            dataset (str): name of the dataset
-            table (str): name of the table
-            overwrite(bool): if True, will overwrite. Otherwise will append.
-            use_bqstorage (bool): set to True to download big data, will be faster
-        '''
         dataset_ref = self.client.dataset(dataset)
         table_ref = dataset_ref.table(table)
         job_config = bigquery.LoadJobConfig()
