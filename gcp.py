@@ -6,8 +6,8 @@ from typing import Dict
 
 class BigQuery:
     ''' 
-    A simple wrapper over google'd bigquery api. 
-    You need to set a GOOGLE_APPLICATION_CREDENTIALS environment variable to point to your secret file.
+    A simple wrapper over google bigquery api. 
+    You need to set a GOOGLE_APPLICATION_CREDENTIALS environment variable to point to your service account key.
     '''
     credentials = None
     client = None
