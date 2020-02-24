@@ -6,7 +6,10 @@ import os
 from typing import Dict
 import pandas as pd
 from google.cloud.bigquery.table import Table
-
+import os
+import pytz
+from datetime import datetime
+            
 class BigQuery:
     ''' 
     A simple wrapper over google bigquery api. 
@@ -19,6 +22,7 @@ class BigQuery:
         self.client = bigquery.Client(credentials=credentials,
                                       project=credentials.project_id)
         self.bqstorage_client = bigquery_storage_v1beta1.BigQueryStorageClient(credentials=credentials)
+
 
     def table_exists(self, dataset: str, table: str) -> bool:
         ''' Check if a table exists.
@@ -45,6 +49,7 @@ class BigQuery:
         table_ref = dataset_ref.table(table)
         return self.client.get_table(table_ref)
 
+
     def query(self, sql, use_bqstorage=True) -> pd.DataFrame:
         '''
         Args:
@@ -59,6 +64,7 @@ class BigQuery:
             return res.to_dataframe()
         else:
             return res.to_dataframe(bqstorage_client=self.bqstorage_client)
+
 
     def create_table(self, sql, dataset, table, overwrite=False) -> None:
         '''
@@ -86,6 +92,7 @@ class BigQuery:
 
         query_job.result()
 
+
     def list_rows(self, dataset: str, table: str, fields: Dict[str, str] = None, use_bqstorage=True) -> pd.DataFrame:
         '''
         Retrieve all rows form a big query table.
@@ -105,6 +112,7 @@ class BigQuery:
             return rows.to_dataframe()
         else:
             return rows.to_dataframe(bqstorage_client=self.bqstorage_client)
+
 
     def upload_csv(self, filepath: str, dataset: str, table: str, overwrite: bool = False) -> None:
         '''
@@ -130,4 +138,35 @@ class BigQuery:
 
         job.result()
         print("Loaded {} rows into {}:{}.".format(job.output_rows, dataset, table))
+
+
+    def read_csv(self, filepath: str, dataset: str, table: str):
+        '''
+        Read a local CSV backed by a BiqQuery table. If the table changes, we update the CSV.
+
+        Args:
+            filepath (str): full path to the CSV file
+            dataset (str): name of the dataset on BigQuery
+            table (str): name of the table on BigQuery
+            confirm (bool): confirm before updating (overwriting) the CSV file
+        '''
+        if os.path.isfile(filepath):
+            info = self.table_info(dataset, table)
+            date_bq = info.modified.astimezone(pytz.timezone("UTC"))
+            date_csv = os.path.getmtime(filepath)
+            date_csv = datetime.fromtimestamp(date_csv)
+            date_csv = pytz.timezone("UTC").localize(date_csv)
+            if date_bq > date_csv:
+                df = self.list_rows(dataset, table)
+                df.to_csv(filepath, index=False)
+                return df
+            else:
+                df = pd.read_csv(filepath)
+                return df
+        else:
+            df = self.list_rows(dataset, table)
+            df.to_csv(filepath, index=False)
+            return df
+
+
 
