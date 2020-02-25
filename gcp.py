@@ -10,7 +10,7 @@ import os
 import pytz
 from datetime import datetime
             
-class BigQuery:
+class Bigquery:
     ''' 
     A simple wrapper over google bigquery api. 
     You need to set a GOOGLE_APPLICATION_CREDENTIALS environment variable to point to your secret file.
@@ -114,7 +114,7 @@ class BigQuery:
             return rows.to_dataframe(bqstorage_client=self.bqstorage_client)
 
 
-    def upload_csv(self, filepath: str, dataset: str, table: str, overwrite: bool = False) -> None:
+    def upload_csv(self, filepath: str, dataset: str, table: str, overwrite: bool = False, append:bool = True) -> None:
         '''
         Upload a local CSV file to a BigQuery table
         
@@ -130,8 +130,13 @@ class BigQuery:
         job_config.source_format = bigquery.SourceFormat.CSV
         job_config.skip_leading_rows = 1
         job_config.autodetect = True
+
         if overwrite:
-            job_config.write_disposition = bigquery.WriteDisposition.WRITE_TRUNCATE
+            job_config.write_disposition = "WRITE_TRUNCATE"
+        elif append:
+            job_config.write_disposition = "WRITE_APPEND"
+        else:
+            job_config.write_disposition = "WRITE_EMPTY"
 
         with open(filepath, "rb") as source_file:
             job = self.client.load_table_from_file(source_file, table_ref, job_config=job_config)
@@ -139,6 +144,34 @@ class BigQuery:
         job.result()
         print("Loaded {} rows into {}:{}.".format(job.output_rows, dataset, table))
 
+
+    def upload_dataframe(self, df: pd.DataFrame, dataset: str, table: str, overwrite: bool = False, append: bool = True) -> None:
+        '''
+        Upload a dataframe to a BigQuery table
+        
+        Args:
+            df: a Pandas dataframe
+            dataset (str): name of the dataset on BigQuery
+            table (str): name of the table on BigQuery
+            overwrite (bool): True = overwrite, False = append
+        '''        
+        dataset_ref = self.client.dataset(dataset)
+        table_ref = dataset_ref.table(table)
+        job_config = bigquery.LoadJobConfig()
+        job_config.source_format = bigquery.SourceFormat.PARQUET
+        job_config.autodetect = True
+
+        if overwrite:
+            job_config.write_disposition = "WRITE_TRUNCATE"
+        elif append:
+            job_config.write_disposition = "WRITE_APPEND"
+        else:
+            job_config.write_disposition = "WRITE_EMPTY"
+
+        job = self.client.load_table_from_dataframe(df, table_ref, job_config=job_config)
+
+        job.result()
+        print("Loaded {} rows into {}:{}.".format(job.output_rows, dataset, table))
 
     def read_csv(self, filepath: str, dataset: str, table: str):
         '''
