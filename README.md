@@ -11,7 +11,7 @@ In order to use the functions this script, you will need:
 
 ### Install:
 
-- pip install git+https://github.com/klahrich/easycloud.git
+- `pip install git+https://github.com/klahrich/easycloud.git`
 
 ### Example usage:
 
