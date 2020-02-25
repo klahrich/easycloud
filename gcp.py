@@ -66,7 +66,7 @@ class BigQuery:
             return res.to_dataframe(bqstorage_client=self.bqstorage_client)
 
 
-    def create_table(self, sql, dataset, table, overwrite=False) -> None:
+    def create_table(self, sql, dataset, table, overwrite=False, append=True) -> None:
         '''
         Create a BigQuery table from sql query.
 
@@ -80,13 +80,13 @@ class BigQuery:
         table_ref = dataset_ref.table(table)
         job_config = bigquery.QueryJobConfig()
         job_config.destination = table_ref
-        
-        if self.table_exists(dataset, table):
-            if overwrite:
-                self.client.delete_table(table)
-            else:
-                print(f"Table {dataset}:{table} already exists. Skipping.")
-                return
+
+        if overwrite:
+            job_config.write_disposition = "WRITE_TRUNCATE"
+        elif append:
+            job_config.write_disposition = "WRITE_APPEND"
+        else:
+            job_config.write_disposition = "WRITE_EMPTY"
         
         query_job = self.client.query(sql, job_config=job_config)
 
