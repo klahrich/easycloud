@@ -148,7 +148,6 @@ class BigQuery:
             filepath (str): full path to the CSV file
             dataset (str): name of the dataset on BigQuery
             table (str): name of the table on BigQuery
-            confirm (bool): confirm before updating (overwriting) the CSV file
         '''
         if os.path.isfile(filepath):
             info = self.table_info(dataset, table)
