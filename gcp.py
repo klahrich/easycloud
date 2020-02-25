@@ -74,7 +74,8 @@ class Bigquery:
             sql (str): the sql query to run (e.g. "SELECT * FROM some_dataset.some_table")
             dataset (str): name of destination dataset
             table (str): name of destination table
-            overwrite (bool): if False and the table already exists, the function will do nothing
+            overwrite (bool): True = overwrite
+            append (bool): only considered if overwrite=False, True = append
         '''
         dataset_ref = self.client.dataset(dataset)
         table_ref = dataset_ref.table(table)
@@ -122,7 +123,8 @@ class Bigquery:
             filepath (str): full path to the CSV file
             dataset (str): name of the dataset on BigQuery
             table (str): name of the table on BigQuery
-            overwrite (bool): True = overwrite, False = append
+            overwrite (bool): True = overwrite
+            append (bool): only considered if overwrite=False, True = append
         '''        
         dataset_ref = self.client.dataset(dataset)
         table_ref = dataset_ref.table(table)
@@ -153,7 +155,8 @@ class Bigquery:
             df: a Pandas dataframe
             dataset (str): name of the dataset on BigQuery
             table (str): name of the table on BigQuery
-            overwrite (bool): True = overwrite, False = append
+            overwrite (bool): True = overwrite
+            append (bool): only considered if overwrite=False, True = append
         '''        
         dataset_ref = self.client.dataset(dataset)
         table_ref = dataset_ref.table(table)
