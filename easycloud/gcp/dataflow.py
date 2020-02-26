@@ -4,6 +4,7 @@ from apache_beam.options.pipeline_options import SetupOptions
 import yaml
 import importlib
 import argparse
+import logging
 
 
 class Dataflow:
