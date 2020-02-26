@@ -6,7 +6,7 @@ setup(
     author='Karim Lahrichi',
     author_email='klahrich@gmail.com',
     packages=find_packages(),
-    install_requires=['pandas', 'google-cloud-bigquery', 'google-cloud-bigquery-storage', 'apache-beam[gcp]'],
+    install_requires=['pandas', 'google-cloud-bigquery', 'google-cloud-bigquery-storage', 'apache-beam[gcp]', 'pyaml'],
     version='0.1',
     license='MIT',
     description='A collection of easy to remember functions for manipulating data on cloud platforms',
