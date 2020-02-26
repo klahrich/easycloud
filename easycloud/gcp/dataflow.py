@@ -2,6 +2,7 @@ import apache_beam as beam
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.options.pipeline_options import SetupOptions
 import pyaml
+import importlib
 
 
 class Dataflow:
@@ -37,6 +38,7 @@ class Dataflow:
 if __name__ == '__main__':
 
 	parser = argparse.ArgumentParser()
+	parser.add_argument('runner')
 	parser.add_argument('--config_file')
 
 	args = parser.parse_args()
@@ -44,8 +46,10 @@ if __name__ == '__main__':
 	with open(args.config_file) as f:
 		config = yaml.load(f, Loader=yaml.FullLoader)
 
+	runner_module = importlib.import_module('args.runner')
+
 	flow = Dataflow(**config)
-	flow.run()
+	flow.run(runner_module.run)
 
 
 
