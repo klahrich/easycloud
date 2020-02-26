@@ -16,9 +16,9 @@ In order to use the functions this script, you will need:
 ### Example usage:
 
 ```python
-import gcp
+from import eascloud.gcp import Bigquery
 
-bq = gcp.BigQuery()
+bq = Bigquery()
 
 df = bq.query("SELECT AVG(some_numeric_var) AS my_avg FROM some_dataset.some_table")
 
