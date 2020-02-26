@@ -16,7 +16,7 @@ In order to use the functions this script, you will need:
 ### Example usage:
 
 ```python
-from import eascloud.gcp import Bigquery
+from import easycloud.gcp import Bigquery
 
 bq = Bigquery()
 
