@@ -47,7 +47,7 @@ if __name__ == '__main__':
 	with open(args.config_file) as f:
 		config = yaml.load(f, Loader=yaml.FullLoader)
 
-	runner_module = importlib.import_module('args.runner')
+	runner_module = importlib.import_module(args.runner)
 
 	flow = Dataflow(**config)
 	flow.run(runner_module.run)
