@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='Easy Cloud',
+    name='easycloud',
     url='https://github.com/klahrich/easycloud',
     author='Karim Lahrichi',
     author_email='klahrich@gmail.com',
