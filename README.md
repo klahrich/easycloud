@@ -11,12 +11,12 @@ In order to use the functions this script, you will need:
 
 ### Install:
 
-- `pip install git+https://github.com/klahrich/easycloud.git`
+- `pip install --upgrade git+https://github.com/klahrich/easycloud.git`
 
 ### Example usage:
 
 ```python
-from import easycloud.gcp import Bigquery
+from easycloud.gcp.bigquery import Bigquery
 
 bq = Bigquery()
 
