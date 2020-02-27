@@ -180,9 +180,10 @@ class Bigquery:
         job.result()
         print("Loaded {} rows into {}:{}.".format(job.output_rows, dataset, table))
 
-    def read_csv(self, filepath: str, dataset: str, table: str):
+    def read_csv(self, filepath: str, dataset: str, table: str) -> pd.DataFrame:
         '''
-        Read a local CSV backed by a BiqQuery table. If the table changes, we update the CSV.
+        A warpper around `list_rows` that saves a Bigquery table to local CSV and reads from it. 
+        If the table changes, we update the CSV.
 
         Args:
             filepath (str): full path to the CSV file
