@@ -42,20 +42,20 @@ root_folder
 |
 |_setup.py
 |
-|_package_name
+|_my_package
   |_ __init__.py
   |_module1.py
-  |_module2.py
+  |_my_runner.py
 ```
 
 2. Dataflow runner
 
-The code you want to run on Dataflow should be in one of your modules, and it has to be inside a `run` function, taking one parameter (the dataflow pipeline). Here's an example of what such a module could contain, where `some_func` is a function you want to apply to every row of a Bigquery table:
+The code you want to run on Dataflow should be in one of your modules (for this example, we assume it is the `my_runner` module), and it has to be inside a `run` function, taking one parameter (the dataflow pipeline). Here's an example of what such a module could contain, where `some_func` is a function you want to apply to every row of a Bigquery table:
 
 ```python
 
 import apache_beam as beam
-from module2 import some_func
+from my_package.module1 import some_func
 
 def run(p):
     return (p | 'processing' >> 
@@ -81,5 +81,5 @@ setup_file: ./setup.py
 4. Running the job
 
 From within your root folder, run the following command (here we assume that your runner is inside module1):
-`python -m easycloud.gcp.dataflow module1 --config_file config.yaml`
+`python -m easycloud.gcp.dataflow my_package.my_runner --config_file config.yaml`
 
