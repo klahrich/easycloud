@@ -13,10 +13,10 @@ import apache_beam as beam
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.options.pipeline_options import SetupOptions
 
-            
+
 class Bigquery:
-    ''' 
-    A simple wrapper over google bigquery api. 
+    '''
+    A simple wrapper over google bigquery api.
     You need to set a GOOGLE_APPLICATION_CREDENTIALS environment variable to point to your secret file.
     '''
 
@@ -30,11 +30,11 @@ class Bigquery:
 
     def table_exists(self, dataset: str, table: str) -> bool:
         ''' Check if a table exists.
-        
+
         Args:
             dataset (str): name of the dataset on BigQuery
             table (str): name of the table on BigQuery
-            
+
         Returns: True or False
         '''
         dataset_ref = self.client.dataset(dataset)
@@ -92,13 +92,13 @@ class Bigquery:
             job_config.write_disposition = "WRITE_APPEND"
         else:
             job_config.write_disposition = "WRITE_EMPTY"
-        
+
         query_job = self.client.query(sql, job_config=job_config)
 
         query_job.result()
 
 
-    def list_rows(self, dataset: str, table: str, fields: Dict[str, str] = None, use_bqstorage=True) -> pd.DataFrame:
+    def list_rows(self, dataset: str, table: str, fields: Dict[str, str] = None, start_index: int = None, nrows: int = None, use_bqstorage=True) -> pd.DataFrame:
         '''
         Retrieve all rows form a big query table.
 
@@ -112,8 +112,9 @@ class Bigquery:
         '''
         selected_fields = [bigquery.SchemaField(k, v) for k,v in fields.items()] if fields is not None else None
         table_path = '.'.join([self.project, dataset, table])
-        rows = self.client.list_rows(table_path, selected_fields)
-        if not use_bqstorage:
+        rows = self.client.list_rows(table=table_path, selected_fields=selected_fields, max_results=nrows, start_index=start_index)
+
+        if not use_bqstorage or (nrows is not None):
             return rows.to_dataframe()
         else:
             return rows.to_dataframe(bqstorage_client=self.bqstorage_client)
@@ -122,14 +123,14 @@ class Bigquery:
     def upload_csv(self, filepath: str, dataset: str, table: str, overwrite: bool = False, append:bool = True) -> None:
         '''
         Upload a local CSV file to a BigQuery table
-        
+
         Args:
             filepath (str): full path to the CSV file
             dataset (str): name of the dataset on BigQuery
             table (str): name of the table on BigQuery
             overwrite (bool): True = overwrite
             append (bool): only considered if overwrite=False, True = append
-        '''        
+        '''
         dataset_ref = self.client.dataset(dataset)
         table_ref = dataset_ref.table(table)
         job_config = bigquery.LoadJobConfig()
@@ -154,14 +155,14 @@ class Bigquery:
     def upload_dataframe(self, df: pd.DataFrame, dataset: str, table: str, overwrite: bool = False, append: bool = True) -> None:
         '''
         Upload a dataframe to a BigQuery table
-        
+
         Args:
             df: a Pandas dataframe
             dataset (str): name of the dataset on BigQuery
             table (str): name of the table on BigQuery
             overwrite (bool): True = overwrite
             append (bool): only considered if overwrite=False, True = append
-        '''        
+        '''
         dataset_ref = self.client.dataset(dataset)
         table_ref = dataset_ref.table(table)
         job_config = bigquery.LoadJobConfig()
@@ -189,53 +190,25 @@ class Bigquery:
             dataset (str): name of the dataset on BigQuery
             table (str): name of the table on BigQuery
         '''
+        print("Starting...")
         if os.path.isfile(filepath):
             info = self.table_info(dataset, table)
-            date_bq = info.modified.astimezone(pytz.timezone("UTC"))
+            date_bq = info.modified.astimezone(pytz.timezone('UTC'))
             date_csv = os.path.getmtime(filepath)
             date_csv = datetime.fromtimestamp(date_csv)
-            date_csv = pytz.timezone("UTC").localize(date_csv)
+            date_csv = pytz.timezone('US/Eastern').localize(date_csv).astimezone(pytz.timezone('UTC'))
             if date_bq > date_csv:
+                print("Reading from bigquery")
                 df = self.list_rows(dataset, table)
                 df.to_csv(filepath, index=False)
                 return df
             else:
+                print("Reading from csv")
                 df = pd.read_csv(filepath)
                 return df
         else:
+            print("Reading from bigquery")
             df = self.list_rows(dataset, table)
             df.to_csv(filepath, index=False)
             return df
-
-
-class Dataflow:
-
-    def __init__(self, job_name, project, temp_location, input_table, output_table, output_schema, extra_packages=None):
-        self.options = {}
-        self.options['job_name'] = job_name
-        self.options['project'] = project
-        self.options['temp_location'] = temp_location
-        self.options['staging_location'] = temp_location
-        self.options['runner'] = 'DataflowRunner'
-        self.options['setup_file'] = './setup.py'
-        self.options['extra_packages'] = [extra_packages]
-        self.input_table = project + ':' + input_table
-        self.output_table = project + ':' + output_table
-        self.output_schema = output_schema
-
-    def run(self, runf_func):
-        logging.getLogger().setLevel(logging.INFO)
-
-        pipeline_options = PipelineOptions.from_dictionary(self.options)
-        pipeline_options.view_as(SetupOptions).save_main_session = True
-
-        with beam.Pipeline(options=pipeline_options) as p:
-            p = (p | 'read_bq_table' >> beam.io.Read(beam.io.BigQuerySource(self.input_table)))
-            p = runf_func(p)
-            (p | 'write_bq_table' >> beam.io.gcp.bigquery.WriteToBigQuery(
-                                        self.output_table,
-                                        schema = self.output_schema,
-                                        create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
-                                        write_disposition=beam.io.BigQueryDisposition.WRITE_TRUNCATE))
-
 
