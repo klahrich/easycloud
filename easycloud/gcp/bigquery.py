@@ -20,7 +20,8 @@ class Bigquery:
     You need to set a GOOGLE_APPLICATION_CREDENTIALS environment variable to point to your secret file.
     '''
 
-    def __init__(self):
+    def __init__(self, timezone='US/Eastern'):
+        self.timezone = timezone
         credentials = service_account.Credentials.from_service_account_file(os.environ["GOOGLE_APPLICATION_CREDENTIALS"])
         self.project = credentials.project_id
         self.client = bigquery.Client(credentials=credentials,
@@ -183,7 +184,7 @@ class Bigquery:
 
     def read_csv(self, filepath: str, dataset: str, table: str) -> pd.DataFrame:
         '''
-        A warpper around `list_rows` that saves a Bigquery table to local CSV and reads from it. 
+        A warpper around `list_rows` that saves a Bigquery table to local CSV and reads from it.
         If the table changes, we update the CSV.
 
         Args:
@@ -191,13 +192,12 @@ class Bigquery:
             dataset (str): name of the dataset on BigQuery
             table (str): name of the table on BigQuery
         '''
-        print("Starting...")
         if os.path.isfile(filepath):
             info = self.table_info(dataset, table)
             date_bq = info.modified.astimezone(pytz.timezone('UTC'))
             date_csv = os.path.getmtime(filepath)
             date_csv = datetime.fromtimestamp(date_csv)
-            date_csv = pytz.timezone('US/Eastern').localize(date_csv).astimezone(pytz.timezone('UTC'))
+            date_csv = pytz.timezone(self.timezone).localize(date_csv).astimezone(pytz.timezone('UTC'))
             if date_bq > date_csv:
                 print("Reading from bigquery")
                 df = self.list_rows(dataset, table)
