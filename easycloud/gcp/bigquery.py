@@ -72,7 +72,7 @@ class Bigquery:
             return res.to_dataframe(bqstorage_client=self.bqstorage_client)
 
 
-    def create_table(self, sql, dataset, table, overwrite=False, append=True, **inputs=None) -> None:
+    def create_table(self, sql, dataset, table, overwrite=False, append=True, **inputs) -> None:
         '''
         Create a BigQuery table from sql query.
 
