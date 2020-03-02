@@ -12,6 +12,7 @@ from datetime import datetime
 import apache_beam as beam
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.options.pipeline_options import SetupOptions
+from pathlib import Path
 
 
 class Bigquery:
@@ -71,16 +72,18 @@ class Bigquery:
             return res.to_dataframe(bqstorage_client=self.bqstorage_client)
 
 
-    def create_table(self, sql, dataset, table, overwrite=False, append=True) -> None:
+    def create_table(self, sql, dataset, table, overwrite=False, append=True, inputs=None) -> None:
         '''
         Create a BigQuery table from sql query.
 
         Args:
-            sql (str): the sql query to run (e.g. "SELECT * FROM some_dataset.some_table")
+            sql (str): either the sql query to run (e.g. "SELECT * FROM some_dataset.some_table") or the path to a file containing it.
             dataset (str): name of destination dataset
             table (str): name of destination table
             overwrite (bool): True = overwrite
             append (bool): only considered if overwrite=False, True = append
+            inputs (dict): your sql string can have placeholder variables such as {table1}, {table2}, etc;
+                           you can set the values of those placeholders here, i.e. {'table1': 'name_of_table1', {'table2': 'name_of_table2'}. Note that the table names (name_of_table1, name_of_table2) must be complete table names (project.dataset.table).
         '''
         dataset_ref = self.client.dataset(dataset)
         table_ref = dataset_ref.table(table)
@@ -93,6 +96,14 @@ class Bigquery:
             job_config.write_disposition = "WRITE_APPEND"
         else:
             job_config.write_disposition = "WRITE_EMPTY"
+
+        p = Path(sql)
+        if p.is_file():
+            with open(sql, 'r') as f:
+                sql = f.read()
+
+        if inputs is not None:
+            sql = sql.format(inputs)
 
         query_job = self.client.query(sql, job_config=job_config)
 
