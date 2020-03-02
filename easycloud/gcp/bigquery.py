@@ -103,7 +103,7 @@ class Bigquery:
                 sql = f.read()
 
         if inputs is not None:
-            sql = sql.format(inputs)
+            sql = sql.format(**inputs)
 
         query_job = self.client.query(sql, job_config=job_config)
 
