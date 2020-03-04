@@ -21,9 +21,9 @@ class Bigquery:
     You need to set a GOOGLE_APPLICATION_CREDENTIALS environment variable to point to your secret file.
     '''
 
-    def __init__(self, timezone='US/Eastern'):
+    def __init__(self, timezone='US/Eastern', env_var='GOOGLE_APPLICATION_CREDENTIALS'):
         self.timezone = timezone
-        credentials = service_account.Credentials.from_service_account_file(os.environ["GOOGLE_APPLICATION_CREDENTIALS"])
+        credentials = service_account.Credentials.from_service_account_file(os.environ[env_var])
         self.project = credentials.project_id
         self.client = bigquery.Client(credentials=credentials,
                                       project=credentials.project_id)
