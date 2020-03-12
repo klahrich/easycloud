@@ -265,9 +265,10 @@ class Client:
         
     def df_to_blob(self, df, bucket:str, blobname: str):
         bucket = self.storage_client.get_bucket(bucket)
-        with tempfile.NamedTemporaryFile(mode='w') as temp:
+        with tempfile.NamedTemporaryFile(delete=False) as temp:
             df.to_csv(temp.name, index=False)
             bucket.blob(blobname).upload_from_filename(temp.name)
+        os.remove(temp.name) 
 
 
 
