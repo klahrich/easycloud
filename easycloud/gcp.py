@@ -263,7 +263,7 @@ class Client:
         bucket.blob(p.name).upload_from_filename(filepath)
         
         
-    def df_to_blob(df, bucket:str, blobname: str):
+    def df_to_blob(self, df, bucket:str, blobname: str):
         bucket = self.storage_client.get_bucket(bucket)
         with tempfile.NamedTemporaryFile as temp:
             df.to_csv(temp.name, index=False)
