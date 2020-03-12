@@ -257,9 +257,9 @@ class Client:
         print("Loaded {} rows into {}:{}.".format(job.output_rows, dataset, table))
         
         
-    def file_to_blob(self, filepath: str):
+    def file_to_blob(self, filepath: str, bucket: str):
         p = Path(filepath)
-        bucket = self.storage_client.get_bucket(self.name)
+        bucket = self.storage_client.get_bucket(bucket)
         bucket.blob(p.name).upload_from_filename(filepath)
         
         
