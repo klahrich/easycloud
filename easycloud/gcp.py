@@ -21,8 +21,10 @@ import yaml
 import importlib
 import argparse
 import logging
+import tempfile
 
-class Bigquery:
+
+class Client:
     '''
     A simple wrapper over google bigquery api.
     You need to set a GOOGLE_APPLICATION_CREDENTIALS environment variable to point to your secret file.
@@ -35,6 +37,8 @@ class Bigquery:
         self.client = bigquery.Client(credentials=credentials,
                                       project=credentials.project_id)
         self.bqstorage_client = bigquery_storage_v1beta1.BigQueryStorageClient(credentials=credentials)
+        self.storage_client = storage.Client(credentials=credentials,
+                                             project=credentials.project_id)
 
 
     def table_exists(self, dataset: str, table: str) -> bool:
@@ -251,27 +255,13 @@ class Bigquery:
 
         job.result()
         print("Loaded {} rows into {}:{}.".format(job.output_rows, dataset, table))
-
-
-class Bucket:
-    '''
-    A simple wrapper over google storage api.
-    You need to set a GOOGLE_APPLICATION_CREDENTIALS environment variable to point to your secret file.
-    '''
-
-    def __init__(self, name: str, timezone: str = 'US/Eastern', env_var:str = 'GOOGLE_APPLICATION_CREDENTIALS'):
-        self.name = name
-        self.timezone = timezone
-        credentials = service_account.Credentials.from_service_account_file(os.environ[env_var])
-        self.project = credentials.project_id
-        self.client = storage.Client(credentials=credentials,
-                                     project=credentials.project_id)
-        self.bucket = self.client.get_bucket(self.name)
-
-
-    def upload_file(self, filepath: str):
+        
+        
+    def file_to_bucket(self, filepath: str):
         p = Path(filepath)
-        self.bucket.blob(p.name).upload_from_filename(filepath)
+        bucket = self.storage_client.get_bucket(self.name)
+        bucket.blob(p.name).upload_from_filename(filepath)
+
 
 
 class Dataflow:
