@@ -117,16 +117,15 @@ class Bigquery:
         query_job.result()
 
 
-    def table_to_csv(self,
-                     dataset: str,
-                     table: str,
-                     filepath: str,
-                     fields: Dict[str, str] = None,
-                     start_index: int = None,
-                     nrows: int = None,
-                     use_bqstorage=True,
-                     force=False) -> pd.DataFrame:
-
+    def table_to_df(self,
+					dataset: str,
+					table: str,
+					fields: Dict[str, str] = None,
+					start_index: int = None,
+					nrows: int = None,
+					use_bqstorage=True,
+					filepath=None,
+					force=False) -> pd.DataFrame:
         """
         Retrieves data from a bigquery table and save it to local CSV.
         Before downloading the data, we check that the table is more recent than the CSV. If not, we skip.
@@ -135,20 +134,31 @@ class Bigquery:
         Args:
             dataset (str): name of the dataset on BigQuery
             table (str): name of the table on BigQuery
-            filepath (str): full path to the CSV file
             fields (dict): dict of {"field_name": "field_type"}. If None, all columns are returned
             start_index (int): index of first row to retrieve
             nrows (int): number of rows to retrieve
             use_bqstorage (bool): set to True to download big data, will be faster
+			filepath (str): full path to a local CSV file to use as cache. If local CSV file is more recent than bigquery table, we read directly from it (skip download).
             force (bool): just download the table, whether it is more recent than the CSV or not
 
         Returns:
             The data as a pandas dataframe.
         """
-        if force:
+		def _table_to_df():
+			selected_fields = [bigquery.SchemaField(k, v) for k,v in fields.items()] if fields is not None else None
+			table_path = '.'.join([self.project, dataset, table])
+			rows = self.client.list_rows(table=table_path, selected_fields=selected_fields, max_results=nrows, start_index=start_index)
+
+			if not use_bqstorage or (nrows is not None):
+				return rows.to_dataframe()
+			else:
+				return rows.to_dataframe(bqstorage_client=self.bqstorage_client)
+				
+        if (filepath is None) or force:
             print("Downloading from bigquery.")
-            df = self.table_to_df(dataset, table, fields, start_index, nrows, use_bqstorage)
-            df.to_csv(filepath, index=False)
+            df = _table_to_df(dataset, table, fields, start_index, nrows, use_bqstorage)
+            if filepath is not None:
+				df.to_csv(filepath, index=False)
             return df
 
         elif os.path.isfile(filepath):
@@ -159,7 +169,7 @@ class Bigquery:
             date_csv = pytz.timezone(self.timezone).localize(date_csv).astimezone(pytz.timezone('UTC'))
             if date_bq > date_csv:
                 print("Bigquery table is more recent. Downloading from bigquery and overwriting CSV.")
-                df = self.table_to_df(dataset, table, fields, start_index, nrows, use_bqstorage)
+                df = _table_to_df(dataset, table, fields, start_index, nrows, use_bqstorage)
                 df.to_csv(filepath, index=False)
                 return df
             else:
@@ -168,33 +178,9 @@ class Bigquery:
                 return df
         else:
             print("CSV not found. Downloading from bigquery.")
-            df = self.table_to_df(dataset, table, fields, start_index, nrows, use_bqstorage)
+            df = _table_to_df(dataset, table, fields, start_index, nrows, use_bqstorage)
             df.to_csv(filepath, index=False)
-            return df
-
-
-    def table_to_df(self, dataset: str, table: str, fields: Dict[str, str] = None, start_index: int = None, nrows: int = None, use_bqstorage=True) -> pd.DataFrame:
-        '''
-        Download a big query table as pandas dataframe.
-
-        Args:
-            table (str): Full table name, "project_id.dataset.tablename"
-            fields (dict): dict of {"field_name": "field_type"}. If None, all columns are returned
-            start_index (int): index of first row to retrieve
-            nrows (int): number of rows to retrieve
-            use_bqstorage (bool): set to True to download big data, will be faster
-
-        Returns:
-            A pandas dataframe.
-        '''
-        selected_fields = [bigquery.SchemaField(k, v) for k,v in fields.items()] if fields is not None else None
-        table_path = '.'.join([self.project, dataset, table])
-        rows = self.client.list_rows(table=table_path, selected_fields=selected_fields, max_results=nrows, start_index=start_index)
-
-        if not use_bqstorage or (nrows is not None):
-            return rows.to_dataframe()
-        else:
-            return rows.to_dataframe(bqstorage_client=self.bqstorage_client)
+            return df	
 
 
     def csv_to_table(self, filepath: str, dataset: str, table: str, overwrite: bool = False, append:bool = True) -> None:
