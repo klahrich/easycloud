@@ -72,14 +72,14 @@ class Bigquery:
         Returns:
             A pandas dataframe
         '''
-		p = Path(sql)
+        p = Path(sql)
         if p.is_file():
             with open(sql, 'r') as f:
                 sql = f.read()
 
         if inputs is not None:
             sql = sql.format(**inputs)
-			
+            
         res = self.client.query(sql)
         if not use_bqstorage:
             return res.to_dataframe()
