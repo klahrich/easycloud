@@ -1,5 +1,6 @@
 from google.cloud.exceptions import NotFound
 from google.cloud import bigquery
+from google.cloud import storage
 from google.oauth2 import service_account
 from google.cloud import bigquery_storage_v1beta1
 import os
@@ -251,3 +252,23 @@ class Bigquery:
         job.result()
         print("Loaded {} rows into {}:{}.".format(job.output_rows, dataset, table))
 
+
+class Bucket:
+    '''
+    A simple wrapper over google storage api.
+    You need to set a GOOGLE_APPLICATION_CREDENTIALS environment variable to point to your secret file.
+    '''
+
+	def __init__(self, name: str, timezone: str = 'US/Eastern', env_var:str = 'GOOGLE_APPLICATION_CREDENTIALS'):
+		self.name = name
+        self.timezone = timezone
+        credentials = service_account.Credentials.from_service_account_file(os.environ[env_var])
+        self.project = credentials.project_id
+        self.client = storage.Client(credentials=credentials,
+                                     project=credentials.project_id)
+		self.bucket = self.client.get_bucket(self.name)
+
+
+	def upload_file(self, filepath: str):
+		p = Path(filepath)
+		self.bucket.blob(p.name).upload_from_filename(filepath)
