@@ -63,7 +63,7 @@ class Bigquery:
         return self.client.get_table(table_ref)
 
 
-    def query_to_df(self, sql, use_bqstorage=True) -> pd.DataFrame:
+    def query_to_df(self, sql, use_bqstorage=True, **inputs) -> pd.DataFrame:
         '''
         Args:
             sql (str): the SQL query you want to run
@@ -72,6 +72,14 @@ class Bigquery:
         Returns:
             A pandas dataframe
         '''
+		p = Path(sql)
+        if p.is_file():
+            with open(sql, 'r') as f:
+                sql = f.read()
+
+        if inputs is not None:
+            sql = sql.format(**inputs)
+			
         res = self.client.query(sql)
         if not use_bqstorage:
             return res.to_dataframe()
