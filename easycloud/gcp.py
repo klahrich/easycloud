@@ -257,10 +257,17 @@ class Client:
         print("Loaded {} rows into {}:{}.".format(job.output_rows, dataset, table))
         
         
-    def file_to_bucket(self, filepath: str):
+    def file_to_blob(self, filepath: str):
         p = Path(filepath)
         bucket = self.storage_client.get_bucket(self.name)
         bucket.blob(p.name).upload_from_filename(filepath)
+        
+        
+    def df_to_blob(df, bucket:str, blobname: str):
+        bucket = self.storage_client.get_bucket(bucket)
+        with tempfile.NamedTemporaryFile as temp:
+            df.to_csv(temp.name, index=False)
+            bucket.blob(p.name).upload_from_filename(filepath)
 
 
 
