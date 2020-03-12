@@ -127,29 +127,29 @@ class Bigquery:
                      use_bqstorage=True,
                      force=False) -> pd.DataFrame:
 
-		"""
-		Retrieves data from a bigquery table and save it to local CSV.
-		Before downloading the data, we check that the table is more recent than the CSV. If not, we skip.
-		Use force=True to disable this and download the table anyway.
+        """
+        Retrieves data from a bigquery table and save it to local CSV.
+        Before downloading the data, we check that the table is more recent than the CSV. If not, we skip.
+        Use force=True to disable this and download the table anyway.
 
         Args:
             dataset (str): name of the dataset on BigQuery
             table (str): name of the table on BigQuery
             filepath (str): full path to the CSV file
             fields (dict): dict of {"field_name": "field_type"}. If None, all columns are returned
-			start_index (int): index of first row to retrieve
-			nrows (int): number of rows to retrieve
+            start_index (int): index of first row to retrieve
+            nrows (int): number of rows to retrieve
             use_bqstorage (bool): set to True to download big data, will be faster
-			force (bool): just download the table, whether it is more recent than the CSV or not
+            force (bool): just download the table, whether it is more recent than the CSV or not
 
-		Returns:
-			The data as a pandas dataframe.
-		"""
-		if force:
+        Returns:
+            The data as a pandas dataframe.
+        """
+        if force:
             print("Downloading from bigquery.")
             df = self.table_to_df(dataset, table, fields, start_index, nrows, use_bqstorage)
             df.to_csv(filepath, index=False)
-			return df
+            return df
 
         elif os.path.isfile(filepath):
             info = self.table_info(dataset, table)
@@ -180,8 +180,8 @@ class Bigquery:
         Args:
             table (str): Full table name, "project_id.dataset.tablename"
             fields (dict): dict of {"field_name": "field_type"}. If None, all columns are returned
-			start_index (int): index of first row to retrieve
-			nrows (int): number of rows to retrieve
+            start_index (int): index of first row to retrieve
+            nrows (int): number of rows to retrieve
             use_bqstorage (bool): set to True to download big data, will be faster
 
         Returns:
@@ -265,19 +265,19 @@ class Bucket:
     You need to set a GOOGLE_APPLICATION_CREDENTIALS environment variable to point to your secret file.
     '''
 
-	def __init__(self, name: str, timezone: str = 'US/Eastern', env_var:str = 'GOOGLE_APPLICATION_CREDENTIALS'):
-		self.name = name
+    def __init__(self, name: str, timezone: str = 'US/Eastern', env_var:str = 'GOOGLE_APPLICATION_CREDENTIALS'):
+        self.name = name
         self.timezone = timezone
         credentials = service_account.Credentials.from_service_account_file(os.environ[env_var])
         self.project = credentials.project_id
         self.client = storage.Client(credentials=credentials,
                                      project=credentials.project_id)
-		self.bucket = self.client.get_bucket(self.name)
+        self.bucket = self.client.get_bucket(self.name)
 
 
-	def upload_file(self, filepath: str):
-		p = Path(filepath)
-		self.bucket.blob(p.name).upload_from_filename(filepath)
+    def upload_file(self, filepath: str):
+        p = Path(filepath)
+        self.bucket.blob(p.name).upload_from_filename(filepath)
 
 
 class Dataflow:
@@ -313,19 +313,19 @@ class Dataflow:
 # TODO: add a dataflow command to make it more obvious what we're doing
 if __name__ == '__main__':
 
-	parser = argparse.ArgumentParser()
-	parser.add_argument('runner')
-	parser.add_argument('--config_file')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('runner')
+    parser.add_argument('--config_file')
 
-	args = parser.parse_args()
+    args = parser.parse_args()
 
-	with open(args.config_file) as f:
-		config = yaml.load(f, Loader=yaml.FullLoader)
+    with open(args.config_file) as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
 
-	runner_module = importlib.import_module(args.runner)
+    runner_module = importlib.import_module(args.runner)
 
-	flow = Dataflow(**config)
-	flow.run(runner_module.run)
+    flow = Dataflow(**config)
+    flow.run(runner_module.run)
 
 
 
