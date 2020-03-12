@@ -267,7 +267,7 @@ class Client:
         bucket = self.storage_client.get_bucket(bucket)
         with tempfile.NamedTemporaryFile as temp:
             df.to_csv(temp.name, index=False)
-            bucket.blob(p.name).upload_from_filename(filepath)
+            bucket.blob(blobname).upload_from_filename(filepath)
 
 
 
