@@ -56,7 +56,7 @@ class Bigquery:
         return self.client.get_table(table_ref)
 
 
-    def query(self, sql, use_bqstorage=True) -> pd.DataFrame:
+    def query_to_df(self, sql, use_bqstorage=True) -> pd.DataFrame:
         '''
         Args:
             sql (str): the SQL query you want to run
@@ -72,7 +72,7 @@ class Bigquery:
             return res.to_dataframe(bqstorage_client=self.bqstorage_client)
 
 
-    def create_table(self, sql, dataset, table, overwrite=False, append=True, **inputs) -> None:
+    def query_to_table(self, sql, dataset, table, overwrite=False, append=True, **inputs) -> None:
         '''
         Create a BigQuery table from sql query.
 
@@ -110,13 +110,71 @@ class Bigquery:
         query_job.result()
 
 
-    def list_rows(self, dataset: str, table: str, fields: Dict[str, str] = None, start_index: int = None, nrows: int = None, use_bqstorage=True) -> pd.DataFrame:
+    def table_to_csv(self,
+                     dataset: str,
+                     table: str,
+                     filepath: str,
+                     fields: Dict[str, str] = None,
+                     start_index: int = None,
+                     nrows: int = None,
+                     use_bqstorage=True,
+                     force=False) -> pd.DataFrame:
+
+		"""
+		Retrieves data from a bigquery table and save it to local CSV.
+		Before downloading the data, we check that the table is more recent than the CSV. If not, we skip.
+		Use force=True to disable this and download the table anyway.
+
+        Args:
+            dataset (str): name of the dataset on BigQuery
+            table (str): name of the table on BigQuery
+            filepath (str): full path to the CSV file
+            fields (dict): dict of {"field_name": "field_type"}. If None, all columns are returned
+			start_index (int): index of first row to retrieve
+			nrows (int): number of rows to retrieve
+            use_bqstorage (bool): set to True to download big data, will be faster
+			force (bool): just download the table, whether it is more recent than the CSV or not
+
+		Returns:
+			The data as a pandas dataframe.
+		"""
+		if force:
+            print("Downloading from bigquery.")
+            df = self.table_to_df(dataset, table, fields, start_index, nrows, use_bqstorage)
+            df.to_csv(filepath, index=False)
+			return df
+
+        elif os.path.isfile(filepath):
+            info = self.table_info(dataset, table)
+            date_bq = info.modified.astimezone(pytz.timezone('UTC'))
+            date_csv = os.path.getmtime(filepath)
+            date_csv = datetime.fromtimestamp(date_csv)
+            date_csv = pytz.timezone(self.timezone).localize(date_csv).astimezone(pytz.timezone('UTC'))
+            if date_bq > date_csv:
+                print("Bigquery table is more recent. Downloading from bigquery and overwriting CSV.")
+                df = self.table_to_df(dataset, table, fields, start_index, nrows, use_bqstorage)
+                df.to_csv(filepath, index=False)
+                return df
+            else:
+                print("CSV is up to date. Reading from csv.")
+                df = pd.read_csv(filepath)
+                return df
+        else:
+            print("CSV not found. Downloading from bigquery.")
+            df = self.table_to_df(dataset, table, fields, start_index, nrows, use_bqstorage)
+            df.to_csv(filepath, index=False)
+            return df
+
+
+    def table_to_df(self, dataset: str, table: str, fields: Dict[str, str] = None, start_index: int = None, nrows: int = None, use_bqstorage=True) -> pd.DataFrame:
         '''
-        Retrieve all rows form a big query table.
+        Download a big query table as pandas dataframe.
 
         Args:
             table (str): Full table name, "project_id.dataset.tablename"
             fields (dict): dict of {"field_name": "field_type"}. If None, all columns are returned
+			start_index (int): index of first row to retrieve
+			nrows (int): number of rows to retrieve
             use_bqstorage (bool): set to True to download big data, will be faster
 
         Returns:
@@ -132,7 +190,7 @@ class Bigquery:
             return rows.to_dataframe(bqstorage_client=self.bqstorage_client)
 
 
-    def upload_csv(self, filepath: str, dataset: str, table: str, overwrite: bool = False, append:bool = True) -> None:
+    def csv_to_table(self, filepath: str, dataset: str, table: str, overwrite: bool = False, append:bool = True) -> None:
         '''
         Upload a local CSV file to a BigQuery table
 
@@ -141,7 +199,7 @@ class Bigquery:
             dataset (str): name of the dataset on BigQuery
             table (str): name of the table on BigQuery
             overwrite (bool): True = overwrite
-            append (bool): only considered if overwrite=False, True = append
+            append (bool): only considered if overwrite=False.
         '''
         dataset_ref = self.client.dataset(dataset)
         table_ref = dataset_ref.table(table)
@@ -164,7 +222,7 @@ class Bigquery:
         print("Loaded {} rows into {}:{}.".format(job.output_rows, dataset, table))
 
 
-    def upload_dataframe(self, df: pd.DataFrame, dataset: str, table: str, overwrite: bool = False, append: bool = True) -> None:
+    def df_to_table(self, df: pd.DataFrame, dataset: str, table: str, overwrite: bool = False, append: bool = True) -> None:
         '''
         Upload a dataframe to a BigQuery table
 
@@ -193,33 +251,3 @@ class Bigquery:
         job.result()
         print("Loaded {} rows into {}:{}.".format(job.output_rows, dataset, table))
 
-    def read_csv(self, filepath: str, dataset: str, table: str) -> pd.DataFrame:
-        '''
-        A warpper around `list_rows` that saves a Bigquery table to local CSV and reads from it.
-        If the table changes, we update the CSV.
-
-        Args:
-            filepath (str): full path to the CSV file
-            dataset (str): name of the dataset on BigQuery
-            table (str): name of the table on BigQuery
-        '''
-        if os.path.isfile(filepath):
-            info = self.table_info(dataset, table)
-            date_bq = info.modified.astimezone(pytz.timezone('UTC'))
-            date_csv = os.path.getmtime(filepath)
-            date_csv = datetime.fromtimestamp(date_csv)
-            date_csv = pytz.timezone(self.timezone).localize(date_csv).astimezone(pytz.timezone('UTC'))
-            if date_bq > date_csv:
-                print("Reading from bigquery")
-                df = self.list_rows(dataset, table)
-                df.to_csv(filepath, index=False)
-                return df
-            else:
-                print("Reading from csv")
-                df = pd.read_csv(filepath)
-                return df
-        else:
-            print("Reading from bigquery")
-            df = self.list_rows(dataset, table)
-            df.to_csv(filepath, index=False)
-            return df
