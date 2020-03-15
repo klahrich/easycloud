@@ -22,7 +22,7 @@ from easycloud.gcp import *
 
 bq = Bigquery()
 
-df = query_to_local("SELECT AVG(some_numeric_var) AS my_avg FROM some_dataset.some_table", "my_local_df.csv")
+df = query_to_local(bq, "SELECT AVG(some_numeric_var) AS my_avg FROM some_dataset.some_table", "my_local_df.csv")
 
 # df is a regular pandas dataframe
 df.head()
