@@ -43,7 +43,7 @@ bigquery query-to-local 'SELECT AVG(some_numeric_var) AS my_avg FROM some_datase
 - `table_to_local`
 - `local_to_table`
 
-- Dataflow (work in progress)
+### Dataflow (work in progress)
 
 Right now the dataflow module only supports reading from and writing to a Bigquery table.
 
