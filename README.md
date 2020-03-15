@@ -6,7 +6,7 @@
 
 In order to use the functions this script, you will need: 
 - a GCP account, with a project and at least a dataset 
-- a service account key (https://cloud.google.com/iam/docs/creating-managing-service-account-keys)
+- a service account (https://cloud.google.com/iam/docs/creating-managing-service-account-keys)
 - an environment variable called _GOOGLE_APPLICATION_CREDENTIALS_ that points to your service account key file
 
 ### Install:
@@ -15,20 +15,35 @@ In order to use the functions this script, you will need:
 
 ### Example usage:
 
-- Bigquery:
+- Bigquery python api:
 
 ```python
-from easycloud.gcp.bigquery import Bigquery
+from easycloud.gcp import *
 
 bq = Bigquery()
 
-df = bq.query("SELECT AVG(some_numeric_var) AS my_avg FROM some_dataset.some_table")
+df = query_to_local("SELECT AVG(some_numeric_var) AS my_avg FROM some_dataset.some_table", "my_local_df.csv")
 
 # df is a regular pandas dataframe
 df.head()
 ```
 
-- Dataflow
+- Bigquery command-line:
+
+```
+bigquery query-to-local 'SELECT AVG(some_numeric_var) AS my_avg FROM some_dataset.some_table' my_local_df.csv
+```
+
+### Available functions
+
+- `table_exists`
+- `table_info`
+- `query_to_local`
+- `query_to_table`
+- `table_to_local`
+- `local_to_table`
+
+- Dataflow (work in progress)
 
 Right now the dataflow module only supports reading from and writing to a Bigquery table.
 
