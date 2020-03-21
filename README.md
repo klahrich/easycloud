@@ -1,6 +1,10 @@
 # easycloud
 
+### What it is
 
+A set of python functions and command-line utilities to interact with:
+- Bigquery
+- Dataflow
 
 ### Pre-requisites:
 
@@ -43,14 +47,13 @@ bigquery query-to-local 'SELECT AVG(some_numeric_var) AS my_avg FROM some_datase
 - `table_to_local`
 - `local_to_table`
 
-### Dataflow (work in progress)
+### Dataflow
 
-Right now the dataflow module only supports reading from and writing to a Bigquery table.
+The dataflow portion only supports reading from and writing to a Bigquery table.
 
 1. Code structure
 
-To use dataflow, you should have some code you want to run at scale. 
-Your code should itself be structured like a package, as such:
+To use dataflow, you should have some code structured like a package, as such:
 
 ```
 root_folder
@@ -61,6 +64,17 @@ root_folder
   |_ __init__.py
   |_module1.py
   |_my_runner.py
+```
+
+The `setup.py` file can be as simple as:
+```
+from setuptools import setup, find_packages
+
+setup(
+    name='my_package',
+    packages=find_packages(),
+    install_requires=[] 
+)
 ```
 
 2. Dataflow runner
@@ -81,7 +95,7 @@ def run(p):
 
 3. Config file
 
-You need a `config.yaml` file under your root folder. Here's an example of what this file might contain (adapt to your own use-case):
+You need to pass a `config.yaml` file as a command-line option. Here's an example of what this file might contain (adapt to your own use-case):
 
 ```
 job_name: some_name
@@ -89,12 +103,12 @@ project: id_of_bigquery_project
 temp_location: gs://bucket_path
 input_table: dataset.input_table_name
 output_table: dataset.output_table_name
-output_schema: var1:STRING, var2:FLOAT, Credit:FLOAT, output:BOOLEAN
+output_schema: var1:STRING, var2:FLOAT, output:BOOLEAN
 setup_file: ./setup.py
 ```
 
 4. Running the job
 
-From within your root folder, run the following command (here we assume that your runner is inside module1):
-`python -m easycloud.gcp.dataflow my_package.my_runner --config_file config.yaml`
+From within your root folder, run the following command to launch the dataflow job (here we assume that your runner is inside module1):
+`dataflow my_package.my_runner --config_file path/to/config.yaml`
 

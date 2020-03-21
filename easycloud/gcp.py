@@ -361,23 +361,15 @@ class Dataflow:
                                         create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
                                         write_disposition=beam.io.BigQueryDisposition.WRITE_TRUNCATE))
 
-
-# TODO: add a dataflow command to make it more obvious what we're doing
-if __name__ == '__main__':
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('runner')
-    parser.add_argument('--config_file')
-
-    args = parser.parse_args()
-
-    with open(args.config_file) as f:
+@click.command()
+@click.argument('runner')
+@click.option('--config-file')
+def dataflow(runner, config_file):
+    with open(config_file) as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
 
-    runner_module = importlib.import_module(args.runner)
+    runner_module = importlib.import_module(runner)
 
     flow = Dataflow(**config)
     flow.run(runner_module.run)
-
-
 

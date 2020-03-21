@@ -13,5 +13,6 @@ setup(
     entry_points='''
         [console_scripts]
         bigquery=easycloud.gcp:bigquery
+        dataflow=easycloud.gcp:dataflow
     '''
 )
