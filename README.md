@@ -41,6 +41,10 @@ bigquery query-to-local 'SELECT AVG(some_numeric_var) AS my_avg FROM some_datase
 ### Available functions
 
 - `table_exists`
+Args:
+        table_path (str): path of the table in BigQuery, format: 'dataset.tablename'
+
+    Returns: True or False
 - `table_info`
 - `query_to_local`
 - `query_to_table`
