@@ -118,9 +118,10 @@ dataflow my_package.my_runner --config_file path/to/config.yaml
 
 It might happen that you need to do some initialization, as a one time thing before the dataflow job starts.
 
-To do this, you can implement a `init` function in your runner module. If implemented, this function must return a tuple. Then, you can have your `run` function take as many additional positional parameters as there are elements in that tuples, so that the tuple you return from `init` will be unpacked and passed to `run`.
+To do this, you can implement a `init` function in your runner module. __If implemented, this function must return a tuple__. Then, your `run` function must take as many additional positional parameters as there are elements in that tuple, so that the tuple you return from `init` will be unpacked and passed to `run`.
 
 So it would look something like this:
+
 ```{python}
 def init():
     # do something here
