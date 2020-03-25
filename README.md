@@ -109,6 +109,23 @@ setup_file: ./setup.py
 
 4. Running the job
 
-From within your root folder, run the following command to launch the dataflow job (here we assume that your runner is inside module1):
-`dataflow my_package.my_runner --config_file path/to/config.yaml`
+From within your root folder, run the following command to launch the dataflow job (assuming that your runner is inside module1):
+```
+dataflow my_package.my_runner --config_file path/to/config.yaml
+```
 
+5. Initializing the job
+
+It might happen that you need to do some initialization, as a one time thing before the dataflow job starts.
+
+To do this, you can implement a `init` function in your runner module. If implemented, this function must return a tuple. Then, you can have your `run` function take as many additional positional parameters as there are elements in that tuples, so that the tuple you return from `init` will be unpacked and passed to `run`.
+
+So it would look something like this:
+```{python}
+def init():
+    # do something here
+    return (value1, value2)
+
+def run(p, param1, parame):
+    # dataflow stuff, that will be passed param1=value1, param2=value2
+```
